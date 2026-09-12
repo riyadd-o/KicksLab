@@ -183,8 +183,8 @@ function NavbarContent() {
     <header className="relative z-40 bg-transparent flex flex-col">
       {/* ─── SINGLE TOP ROW ────────────────────────────────────────────────────────── */}
       {/* Left: Compact Black Friday Banner (if active) | Right: Track Order & Sign In */}
-      <div className="bg-[#0D0D0D] border-b border-[#2A2420]/40 text-[#F5F0E8] text-xs py-2 px-4 md:px-8">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <div className="bg-[#0D0D0D] border-b border-[#2A2420]/40 text-[#F5F0E8] text-xs py-1.5 sm:py-2 px-3 sm:px-4 md:px-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Left/Center: Compact Promotional Banner (renders null if inactive) */}
           <div className="flex items-center min-w-0">
@@ -192,10 +192,10 @@ function NavbarContent() {
           </div>
 
           {/* Right: Customer Auth / Track order actions */}
-          <div className="flex items-center gap-4 sm:gap-6 shrink-0 ml-auto text-[11px] uppercase tracking-wider font-semibold">
+          <div className="flex items-center gap-3 sm:gap-6 shrink-0 ml-auto text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold">
             <Link
               href="/track-order"
-              className="text-[#A89880] hover:text-[#C9A96E] transition-colors hidden sm:inline-flex items-center gap-1.5 cursor-pointer"
+              className="text-[#A89880] hover:text-[#C9A96E] transition-colors inline-flex items-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap"
             >
               <span>Track Order</span>
             </Link>
@@ -203,7 +203,7 @@ function NavbarContent() {
             {customerUser ? (
               <Link
                 href="/account/dashboard"
-                className="text-[#F5F0E8] hover:text-[#C9A96E] transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="text-[#F5F0E8] hover:text-[#C9A96E] transition-colors hidden sm:inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
                 <User size={13} className="text-[#C9A96E]" />
                 <span>Account</span>
@@ -211,7 +211,7 @@ function NavbarContent() {
             ) : (
               <Link
                 href="/signin"
-                className="text-[#A89880] hover:text-[#C9A96E] transition-colors cursor-pointer"
+                className="text-[#A89880] hover:text-[#C9A96E] transition-colors hidden sm:inline-flex cursor-pointer whitespace-nowrap"
               >
                 Sign In
               </Link>
