@@ -70,11 +70,12 @@ export default function AdminLoginPage() {
               id="email"
               type="email"
               required
+              name="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-[#1A1A1A] border border-[#2A2420] rounded-lg px-4 py-3 text-[#F5F0E8] focus:border-[#C9A96E] focus:outline-none transition-colors text-sm"
+              className="w-full bg-[#1A1A1A] border border-[#2A2420] rounded-lg px-4 py-3 text-[#F5F0E8] focus:border-[#C9A96E] focus:outline-none transition-colors text-base sm:text-sm"
               placeholder="email@example.com"
-              autoComplete="off"
             />
           </div>
 
@@ -87,11 +88,12 @@ export default function AdminLoginPage() {
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 required
+                name="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#1A1A1A] border border-[#2A2420] rounded-lg px-4 py-3 pr-10 text-[#F5F0E8] focus:border-[#C9A96E] focus:outline-none transition-colors text-sm"
+                className="w-full bg-[#1A1A1A] border border-[#2A2420] rounded-lg px-4 py-3 pr-10 text-[#F5F0E8] focus:border-[#C9A96E] focus:outline-none transition-colors text-base sm:text-sm"
                 placeholder="••••••••"
-                autoComplete="new-password"
               />
               <button
                 type="button"

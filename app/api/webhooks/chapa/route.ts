@@ -74,24 +74,25 @@ export async function POST(req: NextRequest) {
       }
 
       if (!refund.completionNotifiedAt) {
-        sendRefundSuccessEmail({
-          to: updatedRefund.customerEmail,
-          customerName: updatedRefund.customerName,
-          refundNumber: updatedRefund.refundNumber,
-          orderNumber: refund.order?.orderNumber || refund.orderId,
-          amount: updatedRefund.amount,
-          paymentMethod: updatedRefund.paymentMethod || "Chapa",
-          chapaRefundRef: refund.chapaRefundRef || ref_id,
-        })
-          .then(async (res) => {
-            if (res.success) {
-              await prisma.refund.update({
-                where: { id: updatedRefund.id },
-                data: { completionNotifiedAt: new Date() },
-              });
-            }
-          })
-          .catch((e) => console.error("Error sending webhook refund success email:", e));
+        try {
+          const res = await sendRefundSuccessEmail({
+            to: updatedRefund.customerEmail,
+            customerName: updatedRefund.customerName,
+            refundNumber: updatedRefund.refundNumber,
+            orderNumber: refund.order?.orderNumber || refund.orderId,
+            amount: updatedRefund.amount,
+            paymentMethod: updatedRefund.paymentMethod || "Chapa",
+            chapaRefundRef: refund.chapaRefundRef || ref_id,
+          });
+          if (res.success) {
+            await prisma.refund.update({
+              where: { id: updatedRefund.id },
+              data: { completionNotifiedAt: new Date() },
+            });
+          }
+        } catch (e) {
+          console.error("Error sending webhook refund success email:", e);
+        }
       }
 
       return NextResponse.json({ status: "success", message: "Refund marked as REFUNDED." });
@@ -107,12 +108,16 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      sendRefundFailedEmail({
-        to: refund.customerEmail,
-        customerName: refund.customerName,
-        refundNumber: refund.refundNumber,
-        orderNumber: refund.order?.orderNumber || refund.orderId,
-      }).catch((e) => console.error("Error sending webhook refund reversed email:", e));
+      try {
+        await sendRefundFailedEmail({
+          to: refund.customerEmail,
+          customerName: refund.customerName,
+          refundNumber: refund.refundNumber,
+          orderNumber: refund.order?.orderNumber || refund.orderId,
+        });
+      } catch (e) {
+        console.error("Error sending webhook refund reversed email:", e);
+      }
 
       return NextResponse.json({ status: "success", message: "Refund marked as REVERSED." });
     }

@@ -13,14 +13,20 @@ function createTransporter() {
     throw new Error(errMsg);
   }
 
+  const cleanUser = user.trim();
+  const cleanPass = pass.trim().replace(/\s+/g, "");
+
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
     secure: true,
     auth: {
-      user,
-      pass,
+      user: cleanUser,
+      pass: cleanPass,
     },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
 }
 
@@ -29,7 +35,7 @@ function getSenderAddress(): string {
   if (!user) {
     throw new Error("EMAIL_USER is not configured in environment variables.");
   }
-  return `KicksLab <${user}>`;
+  return `KicksLab <${user.trim()}>`;
 }
 
 interface WelcomeEmailProps {

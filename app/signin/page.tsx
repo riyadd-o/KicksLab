@@ -83,35 +83,30 @@ export default function SignInPage() {
             </div>
           )}
 
-          <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
-            {/* Hidden dummy fields to prevent browser autofill */}
-            <input type="text" name="fake_email_prevent_autofill" tabIndex={-1} className="hidden h-0 w-0 opacity-0 absolute -z-50" autoComplete="off" />
-            <input type="password" name="fake_password_prevent_autofill" tabIndex={-1} className="hidden h-0 w-0 opacity-0 absolute -z-50" autoComplete="new-password" />
-
+          <form className="space-y-4" onSubmit={handleSubmit} autoComplete="on">
             <div>
-              <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider mb-1.5" htmlFor="email">
                 Email Address
               </label>
               <div className="relative">
-                <Mail size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248]" />
+                <Mail size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248] pointer-events-none" />
                 <input
+                  id="email"
                   type="email"
                   required
-                  name="customer_signin_email_no_autofill"
-                  autoComplete="off"
-                  readOnly
-                  onFocus={(e) => e.target.removeAttribute('readOnly')}
+                  name="email"
+                  autoComplete="email"
                   placeholder="name@example.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:border-[#C9A96E] focus:outline-none transition-colors cursor-pointer focus:cursor-text"
+                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-base sm:text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:border-[#C9A96E] focus:outline-none transition-colors"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider" htmlFor="password">
                   Password
                 </label>
                 <Link href="/forgot-password" className="text-xs text-[#C9A96E] hover:underline">
@@ -119,18 +114,17 @@ export default function SignInPage() {
                 </Link>
               </div>
               <div className="relative">
-                <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248]" />
+                <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248] pointer-events-none" />
                 <input
+                  id="password"
                   type="password"
                   required
-                  name="customer_signin_password_no_autofill"
-                  autoComplete="new-password"
-                  readOnly
-                  onFocus={(e) => e.target.removeAttribute('readOnly')}
+                  name="password"
+                  autoComplete="current-password"
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:border-[#C9A96E] focus:outline-none transition-colors cursor-pointer focus:cursor-text"
+                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-base sm:text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:border-[#C9A96E] focus:outline-none transition-colors"
                 />
               </div>
             </div>

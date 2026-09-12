@@ -74,17 +74,19 @@ export default function ForgotPasswordPage() {
                 Email Address
               </label>
               <div className="relative">
-                <Mail size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248]" />
+                <Mail size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248] pointer-events-none" />
                 <input
                   type="email"
                   required
+                  name="email"
+                  autoComplete="email"
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
                     if (error) setError('');
                   }}
-                  className={`w-full bg-[#0D0D0D] border rounded-xl pl-10 pr-4 py-3 text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:outline-none transition-colors ${
+                  className={`w-full bg-[#0D0D0D] border rounded-xl pl-10 pr-4 py-3 text-base sm:text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:outline-none transition-colors ${
                     error ? 'border-red-500/80 focus:border-red-500' : 'border-[#2A2420] focus:border-[#C9A96E]'
                   }`}
                 />

@@ -71,28 +71,29 @@ export async function POST(
 
     // Idempotent completion email dispatch
     if (!refund.completionNotifiedAt) {
-      sendRefundSuccessEmail({
-        to: updatedRefund.customerEmail,
-        customerName: updatedRefund.customerName,
-        refundNumber: updatedRefund.refundNumber,
-        orderNumber: order.orderNumber,
-        amount: updatedRefund.amount,
-        paymentMethod: "Cash on Delivery",
-        refundMethod: updatedRefund.refundMethod,
-        refundAccountName: updatedRefund.refundAccountName,
-        refundAccountNumber: updatedRefund.refundAccountNumber,
-        refundPhoneNumber: updatedRefund.refundPhoneNumber,
-        chapaRefundRef: null,
-      })
-        .then(async (res) => {
-          if (res.success) {
-            await prisma.refund.update({
-              where: { id: updatedRefund.id },
-              data: { completionNotifiedAt: new Date() },
-            });
-          }
-        })
-        .catch((e) => console.error("Error sending COD refund completion email:", e));
+      try {
+        const res = await sendRefundSuccessEmail({
+          to: updatedRefund.customerEmail || order.customerEmail,
+          customerName: updatedRefund.customerName || order.customerName,
+          refundNumber: updatedRefund.refundNumber,
+          orderNumber: order.orderNumber,
+          amount: updatedRefund.amount,
+          paymentMethod: "Cash on Delivery",
+          refundMethod: updatedRefund.refundMethod,
+          refundAccountName: updatedRefund.refundAccountName,
+          refundAccountNumber: updatedRefund.refundAccountNumber,
+          refundPhoneNumber: updatedRefund.refundPhoneNumber,
+          chapaRefundRef: null,
+        });
+        if (res.success) {
+          await prisma.refund.update({
+            where: { id: updatedRefund.id },
+            data: { completionNotifiedAt: new Date() },
+          });
+        }
+      } catch (e) {
+        console.error("Error sending COD refund completion email:", e);
+      }
     }
 
     return NextResponse.json({

@@ -53,15 +53,29 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Build reset link
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    // Build reset link with dynamic baseUrl
+    const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+    const proto = req.headers.get("x-forwarded-proto") || "https";
+    const origin = host ? `${proto}://${host}` : "";
+    const baseUrl = process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes("localhost")
+      ? process.env.NEXTAUTH_URL
+      : origin || process.env.NEXTAUTH_URL || "http://localhost:3000";
+
     const resetUrl = `${baseUrl}/admin/reset-password?token=${rawToken}`;
 
     // Dispatch reset email
-    await sendAdminPasswordResetEmail({
+    const emailResult = await sendAdminPasswordResetEmail({
       to: adminUser.email,
       resetUrl,
     });
+
+    if (!emailResult.success) {
+      console.error("[Admin Forgot Password] Failed to deliver email:", emailResult.error);
+      return NextResponse.json(
+        { error: `Failed to send reset email: ${emailResult.error || "Please check email configuration."}` },
+        { status: 500 }
+      );
+    }
 
     return successResponse;
   } catch (error: any) {

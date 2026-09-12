@@ -55,21 +55,22 @@ export async function PUT(
 
       // Dispatch rejection notification idempotently
       if (!existingRefund.rejectionNotifiedAt) {
-        sendRefundRejectedEmail({
-          to: updatedRefund.customerEmail,
-          customerName: updatedRefund.customerName,
-          refundNumber: updatedRefund.refundNumber,
-          rejectionReason: finalRejectionReason,
-        })
-          .then(async (res) => {
-            if (res.success) {
-              await prisma.refund.update({
-                where: { id: updatedRefund.id },
-                data: { rejectionNotifiedAt: new Date() },
-              });
-            }
-          })
-          .catch((e) => console.error("Error sending refund rejection email:", e));
+        try {
+          const res = await sendRefundRejectedEmail({
+            to: updatedRefund.customerEmail,
+            customerName: updatedRefund.customerName,
+            refundNumber: updatedRefund.refundNumber,
+            rejectionReason: finalRejectionReason,
+          });
+          if (res.success) {
+            await prisma.refund.update({
+              where: { id: updatedRefund.id },
+              data: { rejectionNotifiedAt: new Date() },
+            });
+          }
+        } catch (e) {
+          console.error("Error sending refund rejection email:", e);
+        }
       }
 
       return NextResponse.json(updatedRefund);
@@ -126,53 +127,55 @@ export async function PUT(
           });
 
           if (!existingRefund.completionNotifiedAt) {
-            sendRefundSuccessEmail({
-              to: updatedRefund.customerEmail,
-              customerName: updatedRefund.customerName,
-              refundNumber: updatedRefund.refundNumber,
-              orderNumber: order.orderNumber,
-              amount: updatedRefund.amount,
-              paymentMethod: "Cash on Delivery",
-              refundMethod: updatedRefund.refundMethod,
-              refundAccountName: updatedRefund.refundAccountName,
-              refundAccountNumber: updatedRefund.refundAccountNumber,
-              refundPhoneNumber: updatedRefund.refundPhoneNumber,
-              chapaRefundRef: null,
-            })
-              .then(async (res) => {
-                if (res.success) {
-                  await prisma.refund.update({
-                    where: { id: updatedRefund.id },
-                    data: { completionNotifiedAt: new Date() },
-                  });
-                }
-              })
-              .catch((e) => console.error("Error sending COD refund completion email:", e));
+            try {
+              const res = await sendRefundSuccessEmail({
+                to: updatedRefund.customerEmail || order.customerEmail,
+                customerName: updatedRefund.customerName || order.customerName,
+                refundNumber: updatedRefund.refundNumber,
+                orderNumber: order.orderNumber,
+                amount: updatedRefund.amount,
+                paymentMethod: "Cash on Delivery",
+                refundMethod: updatedRefund.refundMethod,
+                refundAccountName: updatedRefund.refundAccountName,
+                refundAccountNumber: updatedRefund.refundAccountNumber,
+                refundPhoneNumber: updatedRefund.refundPhoneNumber,
+                chapaRefundRef: null,
+              });
+              if (res.success) {
+                await prisma.refund.update({
+                  where: { id: updatedRefund.id },
+                  data: { completionNotifiedAt: new Date() },
+                });
+              }
+            } catch (e) {
+              console.error("Error sending COD refund completion email:", e);
+            }
           }
         } else if (finalCodStatus === "APPROVED") {
           if (!existingRefund.approvalNotifiedAt) {
-            sendRefundApprovedEmail({
-              to: updatedRefund.customerEmail,
-              customerName: updatedRefund.customerName,
-              refundNumber: updatedRefund.refundNumber,
-              orderNumber: order.orderNumber,
-              amount: updatedRefund.amount,
-              paymentMethod: "Cash on Delivery",
-              refundMethod: updatedRefund.refundMethod,
-              refundAccountName: updatedRefund.refundAccountName,
-              refundAccountNumber: updatedRefund.refundAccountNumber,
-              refundPhoneNumber: updatedRefund.refundPhoneNumber,
-              staffNote: adminNote || updatedRefund.adminNote || undefined,
-            })
-              .then(async (res) => {
-                if (res.success) {
-                  await prisma.refund.update({
-                    where: { id: updatedRefund.id },
-                    data: { approvalNotifiedAt: new Date() },
-                  });
-                }
-              })
-              .catch((e) => console.error("Error sending COD refund approval email:", e));
+            try {
+              const res = await sendRefundApprovedEmail({
+                to: updatedRefund.customerEmail || order.customerEmail,
+                customerName: updatedRefund.customerName || order.customerName,
+                refundNumber: updatedRefund.refundNumber,
+                orderNumber: order.orderNumber,
+                amount: updatedRefund.amount,
+                paymentMethod: "Cash on Delivery",
+                refundMethod: updatedRefund.refundMethod,
+                refundAccountName: updatedRefund.refundAccountName,
+                refundAccountNumber: updatedRefund.refundAccountNumber,
+                refundPhoneNumber: updatedRefund.refundPhoneNumber,
+                staffNote: adminNote || updatedRefund.adminNote || undefined,
+              });
+              if (res.success) {
+                await prisma.refund.update({
+                  where: { id: updatedRefund.id },
+                  data: { approvalNotifiedAt: new Date() },
+                });
+              }
+            } catch (e) {
+              console.error("Error sending COD refund approval email:", e);
+            }
           }
         }
 
@@ -255,24 +258,25 @@ export async function PUT(
 
         // Send ONLY the Approval email on approval action
         if (!existingRefund.approvalNotifiedAt) {
-          sendRefundApprovedEmail({
-            to: updatedRefund.customerEmail,
-            customerName: updatedRefund.customerName,
-            refundNumber: updatedRefund.refundNumber,
-            orderNumber: order.orderNumber,
-            amount: updatedRefund.amount,
-            paymentMethod: "Chapa",
-            staffNote: adminNote || updatedRefund.adminNote || undefined,
-          })
-            .then(async (res) => {
-              if (res.success) {
-                await prisma.refund.update({
-                  where: { id: updatedRefund.id },
-                  data: { approvalNotifiedAt: new Date() },
-                });
-              }
-            })
-            .catch((e) => console.error("Error sending refund approved email:", e));
+          try {
+            const res = await sendRefundApprovedEmail({
+              to: updatedRefund.customerEmail || order.customerEmail,
+              customerName: updatedRefund.customerName || order.customerName,
+              refundNumber: updatedRefund.refundNumber,
+              orderNumber: order.orderNumber,
+              amount: updatedRefund.amount,
+              paymentMethod: "Chapa",
+              staffNote: adminNote || updatedRefund.adminNote || undefined,
+            });
+            if (res.success) {
+              await prisma.refund.update({
+                where: { id: updatedRefund.id },
+                data: { approvalNotifiedAt: new Date() },
+              });
+            }
+          } catch (e) {
+            console.error("Error sending refund approved email:", e);
+          }
         }
 
         return NextResponse.json(updatedRefund);

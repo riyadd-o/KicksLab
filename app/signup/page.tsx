@@ -104,63 +104,66 @@ export default function SignUpPage() {
             </div>
           )}
 
-          <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
+          <form className="space-y-4" onSubmit={handleSubmit} autoComplete="on">
             {/* Full Name */}
             <div>
-              <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider mb-1.5" htmlFor="signup_name">
                 Full Name *
               </label>
               <div className="relative">
-                <User size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248]" />
+                <User size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248] pointer-events-none" />
                 <input
+                  id="signup_name"
                   type="text"
                   required
-                  name="signup_fullname"
-                  autoComplete="off"
+                  name="name"
+                  autoComplete="name"
                   placeholder="Full Name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:border-[#C9A96E] focus:outline-none transition-colors"
+                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-base sm:text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:border-[#C9A96E] focus:outline-none transition-colors"
                 />
               </div>
             </div>
 
             {/* Email Address */}
             <div>
-              <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider mb-1.5" htmlFor="signup_email">
                 Email Address *
               </label>
               <div className="relative">
-                <Mail size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248]" />
+                <Mail size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248] pointer-events-none" />
                 <input
+                  id="signup_email"
                   type="email"
                   required
-                  name="signup_email"
-                  autoComplete="off"
+                  name="email"
+                  autoComplete="email"
                   placeholder="name@example.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:border-[#C9A96E] focus:outline-none transition-colors"
+                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-base sm:text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:border-[#C9A96E] focus:outline-none transition-colors"
                 />
               </div>
             </div>
 
             {/* Phone Row */}
             <div>
-              <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider mb-1.5" htmlFor="signup_phone">
                 Phone Number *
               </label>
               <div className="relative">
-                <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248]" />
+                <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248] pointer-events-none" />
                 <input
+                  id="signup_phone"
                   type="tel"
                   required
-                  name="signup_phone"
-                  autoComplete="off"
+                  name="phone"
+                  autoComplete="tel"
                   placeholder="0912345678"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:border-[#C9A96E] focus:outline-none transition-colors"
+                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-base sm:text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:border-[#C9A96E] focus:outline-none transition-colors"
                 />
               </div>
             </div>
@@ -168,14 +171,15 @@ export default function SignUpPage() {
             {/* Gender & Country Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider mb-1.5" htmlFor="signup_gender">
                   Gender *
                 </label>
                 <select
+                  id="signup_gender"
                   required
                   value={formData.gender}
                   onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl px-4 py-3 text-sm text-[#F5F0E8] focus:border-[#C9A96E] focus:outline-none transition-colors cursor-pointer"
+                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl px-4 py-3 text-base sm:text-sm text-[#F5F0E8] focus:border-[#C9A96E] focus:outline-none transition-colors cursor-pointer"
                 >
                   <option value="" disabled>Select Gender</option>
                   <option value="Male">Male</option>
@@ -188,12 +192,12 @@ export default function SignUpPage() {
                   Country
                 </label>
                 <div className="relative">
-                  <Globe size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#C9A96E]" />
+                  <Globe size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#C9A96E] pointer-events-none" />
                   <input
                     type="text"
                     readOnly
                     value={formData.country}
-                    className="w-full bg-[#1A1816] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-sm text-[#C9A96E] font-medium cursor-not-allowed"
+                    className="w-full bg-[#1A1816] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-base sm:text-sm text-[#C9A96E] font-medium cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -201,39 +205,41 @@ export default function SignUpPage() {
 
             {/* Passwords */}
             <div>
-              <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider mb-1.5" htmlFor="signup_password">
                 Password *
               </label>
               <div className="relative">
-                <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248]" />
+                <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248] pointer-events-none" />
                 <input
+                  id="signup_password"
                   type="password"
                   required
-                  name="signup_password"
+                  name="password"
                   autoComplete="new-password"
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:border-[#C9A96E] focus:outline-none transition-colors"
+                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-base sm:text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:border-[#C9A96E] focus:outline-none transition-colors"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-[#A89880] uppercase tracking-wider mb-1.5" htmlFor="signup_confirm_password">
                 Confirm Password *
               </label>
               <div className="relative">
-                <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248]" />
+                <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C5248] pointer-events-none" />
                 <input
+                  id="signup_confirm_password"
                   type="password"
                   required
-                  name="signup_confirm_password"
+                  name="confirmPassword"
                   autoComplete="new-password"
                   placeholder="••••••••"
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:border-[#C9A96E] focus:outline-none transition-colors"
+                  className="w-full bg-[#0D0D0D] border border-[#2A2420] rounded-xl pl-10 pr-4 py-3 text-base sm:text-sm text-[#F5F0E8] placeholder-[#5C5248] focus:border-[#C9A96E] focus:outline-none transition-colors"
                 />
               </div>
             </div>

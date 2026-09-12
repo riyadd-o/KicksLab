@@ -106,10 +106,12 @@ export async function POST(req: NextRequest) {
 
     setCustomerCookie(res, token);
 
-    // Send Welcome Email asynchronously with Member ID
-    sendWelcomeEmail({ to: newUser.email, name: newUser.name, memberId: newUser.memberId || undefined }).catch((err) => {
+    // Send Welcome Email with Member ID
+    try {
+      await sendWelcomeEmail({ to: newUser.email, name: newUser.name, memberId: newUser.memberId || undefined });
+    } catch (err) {
       console.error("Welcome email delivery failed:", err);
-    });
+    }
 
     return res;
   } catch (error: unknown) {

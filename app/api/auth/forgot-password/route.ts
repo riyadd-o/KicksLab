@@ -23,6 +23,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Invalidate/delete any previous reset tokens for this user
+    await prisma.passwordResetToken.deleteMany({
+      where: { userId: user.id },
+    });
+
     const resetToken = crypto.randomBytes(32).toString("hex");
     const tokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 60 minutes
@@ -35,23 +40,36 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    // Determine base URL dynamically (with support for production Vercel deployment)
+    const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+    const proto = req.headers.get("x-forwarded-proto") || "https";
+    const origin = host ? `${proto}://${host}` : "";
+    const baseUrl = process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes("localhost")
+      ? process.env.NEXTAUTH_URL
+      : origin || process.env.NEXTAUTH_URL || "http://localhost:3000";
+
     const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
 
-    sendCustomerPasswordResetEmail({
+    const emailResult = await sendCustomerPasswordResetEmail({
       to: user.email,
       name: user.name,
       resetUrl,
-    }).catch((err) => {
-      console.error("Customer password reset email delivery failed:", err);
     });
+
+    if (!emailResult.success) {
+      console.error("[Customer Forgot Password] Failed to deliver email:", emailResult.error);
+      return NextResponse.json(
+        { error: `Failed to deliver reset email: ${emailResult.error || "Please check email configuration in environment settings."}` },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       message: "Password reset instructions have been sent to your email address.",
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Customer forgot password error:", error);
-    return NextResponse.json({ error: "An unexpected error occurred." }, { status: 500 });
+    return NextResponse.json({ error: error?.message || "An unexpected error occurred." }, { status: 500 });
   }
 }

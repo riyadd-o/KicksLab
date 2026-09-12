@@ -55,24 +55,25 @@ export async function POST(
       }
 
       if (!refund.completionNotifiedAt) {
-        sendRefundSuccessEmail({
-          to: updatedRefund.customerEmail,
-          customerName: updatedRefund.customerName,
-          refundNumber: updatedRefund.refundNumber,
-          orderNumber: refund.order?.orderNumber || refund.orderId,
-          amount: updatedRefund.amount,
-          paymentMethod: updatedRefund.paymentMethod || "Chapa",
-          chapaRefundRef: refund.chapaRefundRef || ref_id,
-        })
-          .then(async (res) => {
-            if (res.success) {
-              await prisma.refund.update({
-                where: { id: updatedRefund.id },
-                data: { completionNotifiedAt: new Date() },
-              });
-            }
-          })
-          .catch((e) => console.error("Error sending refund success email:", e));
+        try {
+          const res = await sendRefundSuccessEmail({
+            to: updatedRefund.customerEmail || refund.order?.customerEmail || "",
+            customerName: updatedRefund.customerName || refund.order?.customerName || "Valued Customer",
+            refundNumber: updatedRefund.refundNumber,
+            orderNumber: refund.order?.orderNumber || refund.orderId,
+            amount: updatedRefund.amount,
+            paymentMethod: updatedRefund.paymentMethod || "Chapa",
+            chapaRefundRef: refund.chapaRefundRef || ref_id,
+          });
+          if (res.success) {
+            await prisma.refund.update({
+              where: { id: updatedRefund.id },
+              data: { completionNotifiedAt: new Date() },
+            });
+          }
+        } catch (e) {
+          console.error("Error sending refund success email:", e);
+        }
       }
 
       return NextResponse.json({
@@ -94,12 +95,16 @@ export async function POST(
         },
       });
 
-      sendRefundFailedEmail({
-        to: updatedRefund.customerEmail,
-        customerName: updatedRefund.customerName,
-        refundNumber: updatedRefund.refundNumber,
-        orderNumber: refund.order?.orderNumber || refund.orderId,
-      }).catch((e) => console.error("Error sending refund reversed email:", e));
+      try {
+        await sendRefundFailedEmail({
+          to: updatedRefund.customerEmail || refund.order?.customerEmail || "",
+          customerName: updatedRefund.customerName || refund.order?.customerName || "Valued Customer",
+          refundNumber: updatedRefund.refundNumber,
+          orderNumber: refund.order?.orderNumber || refund.orderId,
+        });
+      } catch (e) {
+        console.error("Error sending refund reversed email:", e);
+      }
 
       return NextResponse.json({
         success: true,
