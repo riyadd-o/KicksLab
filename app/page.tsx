@@ -104,7 +104,7 @@ export default function Home() {
   return (
     <div className="flex flex-col w-full overflow-hidden">
       {/* 🖼️ Hero Section */}
-      <section className="relative w-full h-[250px] sm:h-[290px] lg:h-[320px] overflow-hidden bg-[#0D0D0D]">
+      <section className="relative w-full h-[270px] sm:h-[300px] lg:h-[330px] overflow-hidden bg-[#0D0D0D]">
         {/* Footwear Imagery Background */}
         <Image
           src="/images/hero-sneaker.jpg"
@@ -116,22 +116,27 @@ export default function Home() {
         />
 
         {/* Ambient Dark Gradient on Left for Crisp Text Contrast */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 md:via-black/35 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 md:via-black/45 to-transparent" />
 
         {/* Hero Content (Minimal, Clean & Product-Led) */}
         <div className="relative z-10 mx-auto max-w-7xl h-full flex flex-col justify-center px-6 sm:px-10 lg:px-16">
           {/* Eyebrow / Line */}
-          <div className="flex items-center gap-2.5 mb-2 sm:mb-2.5">
+          <div className="flex items-center gap-2.5 mb-1.5 sm:mb-2">
             <span className="w-6 h-[1.5px] bg-[#C9A96E]" />
             <span className="font-sans text-[10px] sm:text-xs tracking-[0.25em] uppercase font-semibold text-[#C9A96E]">
               NEW SEASON
             </span>
           </div>
 
-          {/* Clean Brand Title */}
-          <h1 className="font-sans text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-[#F5F0E8] tracking-tight leading-none mb-3.5 sm:mb-4">
-            Kicks<span className="text-[#C9A96E]">Lab</span>
+          {/* Main Marketing Headline */}
+          <h1 className="font-sans text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-[#F5F0E8] tracking-tight leading-tight mb-1.5 sm:mb-2 max-w-xl">
+            Own Your Next Step.
           </h1>
+
+          {/* Supporting Text */}
+          <p className="font-sans text-xs sm:text-sm md:text-base text-[#D4CEB8] max-w-md leading-relaxed mb-3.5 sm:mb-4">
+            Discover premium sneakers for every occasion.
+          </p>
 
           {/* CTA Button */}
           <div>
