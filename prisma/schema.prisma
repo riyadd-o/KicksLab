@@ -1,0 +1,377 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── USER ────────────────────────────────────────────────
+model User {
+  id            String   @id @default(cuid())
+  memberId      String?  @unique
+  name          String
+  email         String   @unique
+  password      String // bcrypt hashed
+  plainPassword String? // stores readable password for admin view
+  role          Role     @default(USER)
+  phone         String?
+  gender        String? // Male / Female / Prefer not to say
+  country       String?  @default("Ethiopia")
+  address       String?
+  streetAddress String?
+  city          String?
+  postalCode    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  orders              Order[]
+  sessions            Session[]
+  accounts            Account[]
+  passwordResetTokens PasswordResetToken[]
+  reviews             Review[]
+  savedAddresses      SavedAddress[]
+  couponUsages        CouponUsage[]
+}
+
+enum Role {
+  USER
+  ADMIN
+  STAFF
+}
+
+// ─── AUTH.JS REQUIRED MODELS ────────────────────────────
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── SAVED ADDRESS ──────────────────────────────────────
+model SavedAddress {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label         String   @default("Home") // "Home", "Office", "Family", "Other" or custom
+  fullName      String
+  phone         String
+  country       String   @default("Ethiopia")
+  city          String
+  streetAddress String
+  postalCode    String?
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, isDefault])
+}
+
+// ─── PRODUCT ─────────────────────────────────────────────
+model Product {
+  id            String      @id @default(cuid())
+  name          String
+  slug          String      @unique
+  description   String
+  price         Float // in ETB
+  originalPrice Float? // for sale items
+  category      String
+  gender        String // Men / Women / Unisex
+  sizes         String[] // ["38","39","40",...]
+  images        String[] // Cloudinary URLs or https URLs
+  rating        Float       @default(0)
+  featured      Boolean     @default(false)
+  topSelling    Boolean     @default(false)
+  onSale        Boolean     @default(false)
+  isNew         Boolean     @default(false)
+  inStock       Boolean     @default(true)
+  stock         Int         @default(10)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  orderItems       OrderItem[]
+  reviews          Review[]
+  limitedDropItems LimitedDropProduct[]
+}
+
+// ─── ORDER ───────────────────────────────────────────────
+model Order {
+  id          String  @id @default(cuid())
+  orderNumber String  @unique // "KL-854680"
+  userId      String?
+  user        User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  customerName  String
+  customerEmail String
+  customerPhone String
+  streetAddress String
+  city          String
+
+  items                   OrderItem[]
+  subtotal                Float
+  shippingMethod          String // "express" | "regional" or zone name
+  shippingZone            String? // snapshot of shipping zone name at order time e.g. "Dire Dawa", "Addis Ababa"
+  shippingCost            Float
+  total                   Float
+  paymentMethod           String // "Chapa" | "CBE" | "TeleBirr"
+  paymentStatus           PaymentStatus @default(PENDING)
+  paymentReference        String?       @unique // Chapa transaction reference (tx_ref)
+  chapaRefId              String? // Official Chapa internal reference ID (ref_id)
+  paidAt                  DateTime?
+  couponCode              String?
+  couponDiscount          Float?
+  confirmationEmailSentAt DateTime?
+
+  status       OrderStatus @default(PENDING)
+  internalNote String?
+
+  refund       Refund?
+  reviews      Review[]
+  couponUsages CouponUsage[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  name      String // snapshot at time of order
+  image     String
+  size      String
+  quantity  Int
+  price     Float
+}
+
+// ─── COUPON ──────────────────────────────────────────────
+model Coupon {
+  id               String        @id @default(cuid())
+  code             String        @unique
+  discountType     String // "percentage" | "fixed"
+  value            Float
+  minOrder         Float?
+  expiry           DateTime?
+  usageCount       Int           @default(0)
+  usageLimit       Int?
+  perCustomerLimit Int?
+  active           Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  usages           CouponUsage[]
+}
+
+// ─── COUPON USAGE ─────────────────────────────────────────
+model CouponUsage {
+  id        String   @id @default(cuid())
+  couponId  String
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([couponId, orderId])
+  @@index([couponId, userId])
+  @@index([userId])
+}
+
+// ─── REFUND ──────────────────────────────────────────────
+model Refund {
+  id                   String       @id @default(cuid())
+  refundNumber         String       @unique // "RF-XXXXXX"
+  orderId              String       @unique
+  order                Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerName         String
+  customerEmail        String
+  paymentMethod        String
+  amount               Float
+  reason               String
+  description          String?
+  source               String       @default("track-order") // "track-order" | "customer-dashboard" | "direct"
+  chapaRefundRef       String? // Chapa API refund reference ID returned by Chapa
+  chapaTxRef           String? // Original Chapa tx_ref
+  adminNote            String?
+  refundMethod         String? // "TELEBIRR" | "CBE" | "EBIRR" | "AWASH_BIRR"
+  refundAccountName    String?
+  refundAccountNumber  String?
+  refundPhoneNumber    String?
+  status               RefundStatus @default(PENDING)
+  rejectionReason      String?
+  approvalNotifiedAt   DateTime? // Idempotency timestamp for approval email
+  completionNotifiedAt DateTime? // Idempotency timestamp for completion email
+  rejectionNotifiedAt  DateTime? // Idempotency timestamp for rejection email
+  resolvedAt           DateTime?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @default(now()) @updatedAt
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  PROCESSING
+  REFUNDED
+  REJECTED
+  FAILED
+  REVERSED
+}
+
+// ─── PROMOTION ───────────────────────────────────────────
+model Promotion {
+  id                 String   @id @default("singleton")
+  bannerActive       Boolean  @default(true)
+  discountPercentage Float    @default(50)
+  couponCode         String   @default("BLACKFRIDAY")
+  bannerText         String   @default("🖤 Black Friday — Up to 50% Off Sitewide")
+  buttonText         String   @default("SHOP NOW")
+  bannerLink         String   @default("/shop")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+// ─── SHIPPING SETTINGS ────────────────────────────────────
+model ShippingSettings {
+  id                    String  @id @default("singleton")
+  freeShippingEnabled   Boolean @default(true)
+  freeShippingThreshold Float   @default(5000)
+}
+
+// ─── SHIPPING ZONE ────────────────────────────────────────
+model ShippingZone {
+  id        String   @id @default(cuid())
+  name      String // e.g. "Dire Dawa"
+  city      String // e.g. "Dire Dawa"
+  fee       Float // e.g. 100
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── REVIEW ──────────────────────────────────────────────────────────────────
+model Review {
+  id String @id @default(cuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  authorName  String
+  authorEmail String
+
+  rating  Int
+  title   String?
+  comment String
+
+  isVerifiedPurchase Boolean @default(true)
+
+  status ReviewStatus @default(PENDING)
+
+  isFeatured Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, userId])
+  @@index([productId, status])
+  @@index([userId, createdAt])
+  @@index([orderId])
+  @@index([status, isFeatured])
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  HIDDEN
+}
+
+// ─── LIMITED DROP / FLASH SALE ─────────────────────────────
+model LimitedDrop {
+  id            String               @id @default(cuid())
+  title         String               // e.g. "Weekend Sneaker Drop"
+  description   String?              // e.g. "Limited-time prices on selected sneakers."
+  discountType  String               @default("percentage") // "percentage" | "fixed"
+  discountValue Float                // e.g. 20 (for 20% off) or 500 (ETB off)
+  startDate     DateTime
+  endDate       DateTime
+  isActive      Boolean              @default(true)
+  bannerImage   String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  products      LimitedDropProduct[]
+
+  @@index([startDate, endDate, isActive])
+}
+
+model LimitedDropProduct {
+  id            String      @id @default(cuid())
+  limitedDropId String
+  limitedDrop   LimitedDrop @relation(fields: [limitedDropId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([limitedDropId, productId])
+  @@index([limitedDropId])
+  @@index([productId])
+}
