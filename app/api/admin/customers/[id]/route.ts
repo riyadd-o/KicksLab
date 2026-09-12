@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
+
+type OrderWithItems = Prisma.OrderGetPayload<{
+  include: { items: true };
+}>;
 
 export async function GET(
   req: NextRequest,
@@ -47,7 +52,7 @@ export async function GET(
     }
 
     // Fetch all orders strictly associated with this customer's userId
-    const orders = await prisma.order.findMany({
+    const orders: OrderWithItems[] = await prisma.order.findMany({
       where: { userId: user.id },
       include: {
         items: true,
@@ -57,10 +62,10 @@ export async function GET(
 
     // Compute stats
     const totalOrders = orders.length;
-    const paidOrders = orders.filter((o) => o.paymentStatus === "PAID").length;
-    const pendingOrders = orders.filter((o) => o.status === "PENDING").length;
-    const cancelledOrders = orders.filter((o) => o.status === "CANCELLED").length;
-    const totalSpent = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+    const paidOrders = orders.filter((o: OrderWithItems) => o.paymentStatus === "PAID").length;
+    const pendingOrders = orders.filter((o: OrderWithItems) => o.status === "PENDING").length;
+    const cancelledOrders = orders.filter((o: OrderWithItems) => o.status === "CANCELLED").length;
+    const totalSpent = orders.reduce((sum: number, o: OrderWithItems) => sum + (o.total || 0), 0);
 
     return NextResponse.json({
       customer: user,
