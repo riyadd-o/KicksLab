@@ -151,17 +151,46 @@ function NavbarContent() {
   ];
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href === '/') {
+      if (pathname === '/') {
+        e.preventDefault();
+        setMobileMenuOpen(false);
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          window.history.pushState(null, '', '/');
+        }, 80);
+      } else {
+        setMobileMenuOpen(false);
+      }
+      return;
+    }
+
     if (href.startsWith('/#')) {
       const targetId = href.replace('/#', '');
       if (pathname === '/') {
         e.preventDefault();
-        const element = document.getElementById(targetId);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-          window.history.pushState(null, '', href);
-        }
+        setMobileMenuOpen(false);
+        // Timeout ensures mobile menu collapse animation does not cancel or displace smooth scroll
+        setTimeout(() => {
+          const element = document.getElementById(targetId);
+          if (element) {
+            const navbarHeight = 80;
+            const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+            const offsetPosition = elementPosition - navbarHeight;
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth',
+            });
+            window.history.pushState(null, '', href);
+          }
+        }, 100);
+      } else {
+        setMobileMenuOpen(false);
       }
+      return;
     }
+
+    setMobileMenuOpen(false);
   };
 
   useEffect(() => {
@@ -170,9 +199,15 @@ function NavbarContent() {
       const timer = setTimeout(() => {
         const element = document.getElementById(targetId);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
+          const navbarHeight = 80;
+          const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+          const offsetPosition = elementPosition - navbarHeight;
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth',
+          });
         }
-      }, 200);
+      }, 250);
       return () => clearTimeout(timer);
     }
   }, [pathname]);
@@ -187,7 +222,7 @@ function NavbarContent() {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Left/Center: Compact Promotional Banner (renders null if inactive) */}
-          <div className="flex items-center min-w-0">
+          <div className="flex items-center min-w-0 flex-1 sm:flex-initial overflow-hidden">
             <BlackFridayBanner />
           </div>
 
@@ -479,10 +514,7 @@ function NavbarContent() {
               <Link
                 key={link.label}
                 href={link.href}
-                onClick={(e) => {
-                  setMobileMenuOpen(false);
-                  handleNavClick(e, link.href);
-                }}
+                onClick={(e) => handleNavClick(e, link.href)}
                 className="flex items-center gap-2 text-sm uppercase tracking-wider font-semibold text-[#F5F0E8] hover:text-[#C9A96E] py-1.5 transition-colors"
               >
                 {link.icon && <span>{link.icon}</span>}

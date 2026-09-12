@@ -100,7 +100,7 @@ export default function BlackFridayBanner() {
   }
 
   return (
-    <div className="relative flex items-center">
+    <div className="relative flex items-center min-w-0 max-w-full">
       {toast && (
         <div className="absolute top-full mt-2 left-0 bg-[#141414] border border-[#C9A96E] rounded-lg px-3 py-1.5 text-xs text-[#F5F0E8] shadow-xl whitespace-nowrap z-[100]">
           {toast}
@@ -109,12 +109,12 @@ export default function BlackFridayBanner() {
 
       {/* Sleek compact promotional container around promo text, link, and button ONLY */}
       <div
-        className="inline-flex items-center gap-2.5 sm:gap-3 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border border-[#C9A96E]/30 shadow-md max-w-full text-xs"
+        className="inline-flex items-center gap-2 sm:gap-3 px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-full border border-[#C9A96E]/30 shadow-md min-w-0 max-w-full text-xs"
         style={{
           background: "linear-gradient(90deg, #4A341B 0%, #121212 100%)",
         }}
       >
-        <p className="font-semibold tracking-wider uppercase truncate text-[#F5F0E8] text-[11px] sm:text-xs">
+        <p className="font-semibold tracking-wider uppercase truncate text-[#F5F0E8] text-[10px] sm:text-xs min-w-0 flex-1">
           {config.bannerText}&nbsp;
           <Link
             href={config.bannerLink}
@@ -126,7 +126,7 @@ export default function BlackFridayBanner() {
 
         <button
           onClick={handleClaimOffer}
-          className="flex items-center gap-1 bg-[#C9A96E] hover:bg-[#b0925c] text-[#0D0D0D] text-[10px] sm:text-[11px] font-bold tracking-wide px-2.5 py-0.5 rounded-full transition-all duration-200 shrink-0 cursor-pointer shadow-sm"
+          className="flex items-center gap-1 bg-[#C9A96E] hover:bg-[#b0925c] text-[#0D0D0D] text-[10px] sm:text-[11px] font-bold tracking-wide px-2 sm:px-2.5 py-0.5 rounded-full transition-all duration-200 shrink-0 cursor-pointer shadow-sm whitespace-nowrap"
         >
           🎁 Claim Offer
         </button>
