@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Sparkles, ShieldCheck, RefreshCw, Truck } from 'lucide-react';
+import { ArrowRight, Sparkles, ShieldCheck, RefreshCw, Truck, Star } from 'lucide-react';
 import { Product } from '@/lib/products';
 import ProductCard from '@/components/product/ProductCard';
 import CategoryCard from '@/components/product/CategoryCard';
@@ -104,7 +104,7 @@ export default function Home() {
   return (
     <div className="flex flex-col w-full overflow-hidden">
       {/* 🖼️ Hero Section */}
-      <section className="relative w-full h-[270px] sm:h-[300px] lg:h-[330px] overflow-hidden bg-[#0D0D0D]">
+      <section className="relative w-full min-h-[360px] sm:min-h-[400px] lg:min-h-[430px] py-8 sm:py-12 flex flex-col justify-center overflow-hidden bg-[#0D0D0D]">
         {/* Footwear Imagery Background */}
         <Image
           src="/images/hero-sneaker.jpg"
@@ -119,7 +119,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 md:via-black/45 to-transparent" />
 
         {/* Hero Content (Minimal, Clean & Product-Led) */}
-        <div className="relative z-10 mx-auto max-w-7xl h-full flex flex-col justify-center px-6 sm:px-10 lg:px-16">
+        <div className="relative z-10 mx-auto max-w-7xl w-full flex flex-col justify-center px-6 sm:px-10 lg:px-16">
           {/* Eyebrow / Line */}
           <div className="flex items-center gap-2.5 mb-1.5 sm:mb-2">
             <span className="w-6 h-[1.5px] bg-[#C9A96E]" />
@@ -134,18 +134,64 @@ export default function Home() {
           </h1>
 
           {/* Supporting Text */}
-          <p className="font-sans text-xs sm:text-sm md:text-base text-[#D4CEB8] max-w-md leading-relaxed mb-3.5 sm:mb-4">
+          <p className="font-sans text-xs sm:text-sm md:text-base text-[#D4CEB8] max-w-md leading-relaxed mb-3 sm:mb-4">
             Discover premium sneakers for every occasion.
           </p>
 
-          {/* CTA Button */}
+          {/* Trust / Feature Row */}
+          <div className="flex items-center gap-3 sm:gap-5 md:gap-6 py-1 mb-4">
+            {/* 1. Authentic Products */}
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#C9A96E] shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#F5F0E8] leading-tight">
+                  AUTHENTIC
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#D4CEB8] leading-tight">
+                  PRODUCTS
+                </span>
+              </div>
+            </div>
+
+            <div className="w-[1px] h-6 sm:h-7 bg-[#C9A96E]/40" />
+
+            {/* 2. Fast Shipping */}
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-[#C9A96E] shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#F5F0E8] leading-tight">
+                  FAST
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#D4CEB8] leading-tight">
+                  SHIPPING
+                </span>
+              </div>
+            </div>
+
+            <div className="w-[1px] h-6 sm:h-7 bg-[#C9A96E]/40" />
+
+            {/* 3. Curated Selection */}
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-[#C9A96E] shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#F5F0E8] leading-tight">
+                  CURATED
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#D4CEB8] leading-tight">
+                  SELECTION
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Primary CTA Button */}
           <div>
             <Link
               href="/shop"
-              className="inline-flex items-center gap-2 rounded-full bg-[#C9A96E] hover:bg-[#b8955b] text-[#0D0D0D] font-sans font-bold text-xs uppercase tracking-wider px-5 py-2.5 sm:px-6 sm:py-3 shadow-md shadow-[#C9A96E]/20 transition-all duration-300 hover:scale-105"
+              className="group inline-flex items-center gap-2.5 rounded-full bg-[#E5A93C] hover:bg-[#d89b30] text-[#0D0D0D] font-sans font-bold text-xs sm:text-sm uppercase tracking-wider px-7 py-3 sm:px-8 sm:py-3.5 shadow-xl shadow-[#E5A93C]/25 transition-all duration-300 hover:scale-105 active:scale-95"
             >
               <span>SHOP NOW</span>
-              <ArrowRight className="h-3.5 w-3.5" />
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </div>
         </div>
