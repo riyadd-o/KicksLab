@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isCashPayment } from "@/lib/payment";
 
 export async function POST(req: NextRequest) {
   try {
@@ -56,8 +57,7 @@ export async function POST(req: NextRequest) {
     }
 
     // COD orders: Allow refund requests if delivered or already marked as paid, and require refund payout destination
-    const pm = (order.paymentMethod || "").trim().toUpperCase();
-    const isCOD = pm === "CASH_ON_DELIVERY" || pm === "COD" || pm.includes("CASH");
+    const isCOD = isCashPayment(order.paymentMethod);
     if (isCOD && order.status !== "DELIVERED" && order.paymentStatus !== "PAID") {
       return NextResponse.json(
         { error: "For active Cash on Delivery orders prior to delivery, please use 'Cancel Order'. Refund requests become available once the order has been delivered." },
@@ -137,24 +137,27 @@ export async function POST(req: NextRequest) {
 
     const refundNumber = "RF-" + Math.floor(100000 + Math.random() * 900000);
 
+    const refundData = {
+      refundNumber,
+      orderId: order.id,
+      customerName: order.customerName,
+      customerEmail: order.customerEmail,
+      paymentMethod: order.paymentMethod,
+      paymentProvider: (order as typeof order & { paymentProvider?: string }).paymentProvider || (isCOD ? "NONE" : "CHAPA"),
+      amount: order.total,
+      reason,
+      description,
+      source: source || "track-order",
+      chapaTxRef: order.paymentReference || null,
+      refundMethod: validRefundMethod,
+      refundAccountName: validRefundAccountName,
+      refundAccountNumber: validRefundAccountNumber,
+      refundPhoneNumber: validRefundPhoneNumber,
+      status: "PENDING" as const
+    };
+
     const refund = await prisma.refund.create({
-      data: {
-        refundNumber,
-        orderId: order.id,
-        customerName: order.customerName,
-        customerEmail: order.customerEmail,
-        paymentMethod: order.paymentMethod,
-        amount: order.total,
-        reason,
-        description,
-        source: source || "track-order",
-        chapaTxRef: order.paymentReference || null,
-        refundMethod: validRefundMethod,
-        refundAccountName: validRefundAccountName,
-        refundAccountNumber: validRefundAccountNumber,
-        refundPhoneNumber: validRefundPhoneNumber,
-        status: "PENDING"
-      }
+      data: refundData
     });
 
     return NextResponse.json({ success: true, refund }, { status: 201 });

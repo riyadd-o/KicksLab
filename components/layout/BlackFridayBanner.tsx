@@ -28,6 +28,7 @@ export default function BlackFridayBanner() {
   const [config, setConfig] = useState<PromotionConfig>(DEFAULT_CONFIG);
   const [mounted, setMounted] = useState(false);
   const [toast, setToast] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const fetchConfig = async () => {
     try {
@@ -73,15 +74,30 @@ export default function BlackFridayBanner() {
       // Apply promotional coupon directly to cart store
       useCartStore.getState().applyCoupon(codeToApply, percentToApply, 'percentage', percentToApply);
 
-      // Attempt clipboard copy as convenience
+      // Attempt clipboard copy with fallback
       try {
         if (navigator.clipboard && window.isSecureContext) {
           await navigator.clipboard.writeText(codeToApply);
+        } else {
+          const textArea = document.createElement('textarea');
+          textArea.value = codeToApply;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-9999px';
+          textArea.style.top = '0';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
         }
       } catch (err) {}
 
-      setToast(`✓ Black Friday offer claimed! (${percentToApply}% OFF applied)`);
-      setTimeout(() => setToast(''), 4000);
+      setCopied(true);
+      setToast(`✓ Copied "${codeToApply}" (${percentToApply}% OFF applied)`);
+      setTimeout(() => {
+        setCopied(false);
+        setToast('');
+      }, 3000);
     } catch (err) {
       console.error(err);
       setToast("Failed to claim offer.");
@@ -102,7 +118,7 @@ export default function BlackFridayBanner() {
   return (
     <div className="relative flex items-center min-w-0 max-w-full">
       {toast && (
-        <div className="absolute top-full mt-2 left-0 bg-[#141414] border border-[#C9A96E] rounded-lg px-3 py-1.5 text-xs text-[#F5F0E8] shadow-xl whitespace-nowrap z-[100]">
+        <div className="absolute top-full mt-2 left-0 sm:left-auto sm:right-0 bg-[#141414] border border-[#C9A96E] rounded-lg px-3 py-1.5 text-xs text-[#F5F0E8] shadow-2xl whitespace-nowrap z-[999] pointer-events-none">
           {toast}
         </div>
       )}
@@ -126,9 +142,13 @@ export default function BlackFridayBanner() {
 
         <button
           onClick={handleClaimOffer}
-          className="flex items-center gap-1 bg-[#C9A96E] hover:bg-[#b0925c] text-[#0D0D0D] text-[10px] sm:text-[11px] font-bold tracking-wide px-2 sm:px-2.5 py-0.5 rounded-full transition-all duration-200 shrink-0 cursor-pointer shadow-sm whitespace-nowrap"
+          className={`flex items-center gap-1 text-[10px] sm:text-[11px] font-bold tracking-wide px-2 sm:px-2.5 py-0.5 rounded-full transition-all duration-200 shrink-0 cursor-pointer shadow-sm whitespace-nowrap ${
+            copied
+              ? 'bg-emerald-500 text-black shadow-emerald-500/30 shadow'
+              : 'bg-[#C9A96E] hover:bg-[#b0925c] text-[#0D0D0D]'
+          }`}
         >
-          🎁 Claim Offer
+          {copied ? '✓ Copied!' : '🎁 Claim Offer'}
         </button>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/session";
 import { transitionOrderStatus } from "@/lib/order-transition";
+import { isCashPayment } from "@/lib/payment";
 
 export async function PUT(
   req: NextRequest,
@@ -29,9 +30,7 @@ export async function PUT(
         return NextResponse.json({ error: "Order not found." }, { status: 404 });
       }
 
-      const isCOD =
-        existingOrder.paymentMethod === "CASH_ON_DELIVERY" ||
-        existingOrder.paymentMethod === "COD";
+      const isCOD = isCashPayment(existingOrder.paymentMethod);
 
       if (!isCOD) {
         return NextResponse.json(

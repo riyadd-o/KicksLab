@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Search, Package, Clock, Truck, MapPin, CheckCircle, Check, ArrowLeft, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatPaymentMethodName, isCashPayment, isDigitalPayment } from '@/lib/payment';
 
 export default function TrackOrderPage() {
   const [orderId, setOrderId] = useState('');
@@ -451,9 +452,9 @@ export default function TrackOrderPage() {
 
               {/* Actions Section: Payment-Specific Actions */}
               {(() => {
-                const pm = (foundOrderObj?.paymentMethod || '').trim().toUpperCase();
-                const isChapaOrder = pm === 'CHAPA' || pm.includes('CHAPA');
-                const isCodOrder = pm === 'CASH_ON_DELIVERY' || pm === 'COD' || pm.includes('CASH');
+                const pm = foundOrderObj?.paymentMethod || '';
+                const isDigital = isDigitalPayment(foundOrderObj);
+                const isCodOrder = isCashPayment(pm);
                 const isCancelledOrRefunded = trackingData.status === 'CANCELLED' || trackingData.status === 'REFUNDED';
 
                 const canCancelCod =
@@ -461,19 +462,13 @@ export default function TrackOrderPage() {
                   !isCancelledOrRefunded &&
                   ['PENDING', 'PROCESSING', 'PACKED', 'SHIPPED'].includes(trackingData.status);
 
-                const canRequestChapa =
-                  isChapaOrder &&
+                const canRequestRefund =
+                  (isDigital || (isCodOrder && trackingData.status === 'DELIVERED')) &&
                   !isCancelledOrRefunded &&
                   !existingRefund &&
                   ['PENDING', 'PROCESSING', 'PACKED', 'SHIPPED', 'DELIVERED'].includes(trackingData.status);
 
-                const canRequestCod =
-                  isCodOrder &&
-                  !isCancelledOrRefunded &&
-                  !existingRefund &&
-                  trackingData.status === 'DELIVERED';
-
-                const showRequestRefundBtn = (canRequestChapa || canRequestCod) && !showRefundForm && !refundSuccess;
+                const showRequestRefundBtn = canRequestRefund && !showRefundForm && !refundSuccess;
 
                 if (isCancelledOrRefunded) return null;
 
@@ -548,8 +543,8 @@ export default function TrackOrderPage() {
 
                         {/* Step 2: Refund Method & Destination (COD ONLY) */}
                         {(() => {
-                          const pm = (foundOrderObj?.paymentMethod || trackingData?.paymentMethod || '').trim().toUpperCase();
-                          const isCod = pm === 'CASH_ON_DELIVERY' || pm === 'COD' || pm.includes('CASH');
+                          const pm = foundOrderObj?.paymentMethod || trackingData?.paymentMethod || '';
+                          const isCod = isCashPayment(pm);
                           if (!isCod) return null;
 
                           return (
@@ -816,9 +811,7 @@ export default function TrackOrderPage() {
                       <div className="flex justify-between items-center text-xs">
                         <span className="text-[#A89880]">Payment Method:</span>
                         <span className="text-[#F5F0E8] font-semibold">
-                          {foundOrderObj.paymentMethod === 'CASH_ON_DELIVERY' || foundOrderObj.paymentMethod === 'COD'
-                            ? 'Cash on Delivery'
-                            : foundOrderObj.paymentMethod || 'Chapa Online'}
+                          {formatPaymentMethodName(foundOrderObj.paymentMethod)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-xs">

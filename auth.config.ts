@@ -2,8 +2,8 @@ import type { NextAuthConfig } from "next-auth";
 
 export const authConfig = {
   pages: {
-    signIn: "/login",
-    error: "/login",
+    signIn: "/signin",
+    error: "/signin",
   },
   providers: [], // configured in auth.ts
   callbacks: {

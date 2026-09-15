@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, CreditCard, MapPin, Package, Calendar, ShieldCheck, AlertCircle, Star } from 'lucide-react';
+import { formatPaymentMethodName, isCashPayment } from '@/lib/payment';
 
 export default function CustomerOrderDetailPage({ params }: { params: Promise<{ orderNumber: string }> }) {
   const { orderNumber } = use(params);
@@ -107,8 +108,7 @@ export default function CustomerOrderDetailPage({ params }: { params: Promise<{ 
     );
   }
 
-  const pm = (order.paymentMethod || '').trim().toUpperCase();
-  const isCodOrder = pm === 'CASH_ON_DELIVERY' || pm === 'COD' || pm.includes('CASH');
+  const isCodOrder = isCashPayment(order.paymentMethod);
   const isCancellable = isCodOrder && ['PENDING', 'PROCESSING', 'PACKED', 'SHIPPED'].includes(order.status);
 
   return (
@@ -332,6 +332,18 @@ export default function CustomerOrderDetailPage({ params }: { params: Promise<{ 
               <div className="pt-3 border-t border-[#2A2420] flex justify-between items-center text-sm">
                 <span className="font-bold text-[#F5F0E8]">Final Total</span>
                 <span className="text-lg font-black text-[#C9A96E]">ETB {order.total?.toLocaleString()}</span>
+              </div>
+
+              <div className="pt-2 border-t border-[#2A2420]/60 flex justify-between items-center text-xs">
+                <span>Payment Method</span>
+                <span className="text-[#F5F0E8] font-semibold">{formatPaymentMethodName(order.paymentMethod)}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-xs">
+                <span>Payment Status</span>
+                <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${order.paymentStatus === 'PAID' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'}`}>
+                  {order.paymentStatus === 'PAID' ? 'Paid' : 'Payment Pending'}
+                </span>
               </div>
             </div>
           </div>

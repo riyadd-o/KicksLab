@@ -48,17 +48,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "A valid customer email is required." }, { status: 400 });
     }
 
-    // Payment method allowlist validation
-    let canonicalPaymentMethod = "CASH_ON_DELIVERY";
+    // Payment method validation for direct checkout
+    let canonicalPaymentMethod = "CASH";
+    const canonicalPaymentProvider = "NONE";
     if (paymentMethod) {
-      const norm = String(paymentMethod).trim();
-      if (norm.toUpperCase() === "CASH_ON_DELIVERY" || norm.toLowerCase() === "cod") {
-        canonicalPaymentMethod = "CASH_ON_DELIVERY";
-      } else if (norm.toLowerCase() === "chapa") {
-        canonicalPaymentMethod = "Chapa";
+      const norm = String(paymentMethod).trim().toUpperCase();
+      if (norm === "CASH" || norm === "CASH_ON_DELIVERY" || norm === "COD") {
+        canonicalPaymentMethod = "CASH";
       } else {
         return NextResponse.json(
-          { error: "Invalid payment method. Only Cash on Delivery and Chapa are supported." },
+          { error: "Direct order submission is only valid for Cash payments. Digital payments must use the payment gateway flow." },
           { status: 400 }
         );
       }
@@ -330,6 +329,7 @@ export async function POST(req: NextRequest) {
             shippingCost:   serverShippingCost,
             total:          serverTotal,
             paymentMethod:  canonicalPaymentMethod,
+            paymentProvider: canonicalPaymentProvider,
             paymentStatus:  "PENDING",
             couponCode:     validCouponCode,
             couponDiscount: couponDiscountPercent,

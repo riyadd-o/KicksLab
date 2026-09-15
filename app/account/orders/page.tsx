@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ShoppingBag, ArrowRight, ExternalLink, Calendar, CreditCard } from 'lucide-react';
+import { formatPaymentMethodName } from '@/lib/payment';
 
 export default function CustomerOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -110,9 +111,7 @@ export default function CustomerOrdersPage() {
                     <div className="flex items-center gap-3 text-xs text-[#A89880]">
                       <span className="flex items-center gap-1">
                         <CreditCard size={13} />
-                        {order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'COD'
-                          ? 'Cash on Delivery'
-                          : order.paymentMethod || 'Chapa'}
+                        {formatPaymentMethodName(order.paymentMethod)}
                       </span>
                       <span className={`text-[10px] font-bold px-2 py-0.2 rounded uppercase ${getPaymentBadge(order.paymentStatus)}`}>
                         {order.paymentStatus === 'PAID' ? 'Paid' : 'Payment pending'}

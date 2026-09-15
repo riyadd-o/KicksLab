@@ -222,7 +222,7 @@ function NavbarContent() {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Left/Center: Compact Promotional Banner (renders null if inactive) */}
-          <div className="flex items-center min-w-0 flex-1 sm:flex-initial overflow-hidden">
+          <div className="flex items-center min-w-0 flex-1 sm:flex-initial">
             <BlackFridayBanner />
           </div>
 

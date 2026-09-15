@@ -8,9 +8,15 @@ import { useSession } from 'next-auth/react';
 import {
   Check, CreditCard, ChevronRight, ShoppingBag, ArrowLeft, Calendar,
   CheckCircle, Loader2, User, Banknote, MapPin, Plus, Star, Edit2,
-  Home, Building2, Users, Tag, X, Phone
+  Home, Building2, Users, Tag, X, Phone, Smartphone, Wallet
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  CustomerPaymentMethod,
+  PAYMENT_METHOD_OPTIONS,
+  formatPaymentMethodName,
+  isCashPayment,
+} from '@/lib/payment';
 
 interface ShippingDetails {
   name: string;
@@ -45,10 +51,11 @@ export default function CheckoutPage() {
     country: 'Ethiopia 🇪🇹',
     postalCode: '',
   });
-  const [paymentMethod, setPaymentMethod] = useState<'chapa' | 'cod'>('chapa');
+  const [paymentMethod, setPaymentMethod] = useState<CustomerPaymentMethod | ''>('');
+  const [paymentMethodError, setPaymentMethodError] = useState<string>('');
   const [chapaRef, setChapaRef] = useState<string>('');
   const [confirmedTotal, setConfirmedTotal] = useState<string>('');
-  const [confirmedPaymentMethod, setConfirmedPaymentMethod] = useState<string>('Chapa');
+  const [confirmedPaymentMethod, setConfirmedPaymentMethod] = useState<string>('');
 
   const [customerUser, setCustomerUser] = useState<Record<string, unknown> | null>(null);
   const [existingAccountFound, setExistingAccountFound] = useState(false);
@@ -150,7 +157,7 @@ export default function CheckoutPage() {
             const refToUse = orderData.chapaRefId || orderData.paymentReference || '';
             if (refToUse) setChapaRef(refToUse);
             if (orderData.total) setConfirmedTotal(String(orderData.total));
-            if (orderData.paymentMethod) setConfirmedPaymentMethod(orderData.paymentMethod);
+            if (orderData.paymentMethod) setConfirmedPaymentMethod(formatPaymentMethodName(orderData.paymentMethod));
           }
         })
         .catch((err) => console.error('Error fetching confirmed order:', err));
@@ -413,6 +420,7 @@ export default function CheckoutPage() {
       }
     }
 
+    setPaymentMethodError('');
     setStep(2);
   };
 
@@ -423,11 +431,18 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!paymentMethod) {
+      setPaymentMethodError('Please select your payment method.');
+      return;
+    }
+
+    setPaymentMethodError('');
     setIsSubmitting(true);
     setErrorMessage('');
     try {
       // 1. Cash on Delivery (COD) Flow
-      if (paymentMethod === 'cod') {
+      // 1. Cash on Delivery Flow
+      if (paymentMethod === 'CASH') {
         const orderPayload = {
           customerName: formData.name,
           customerEmail: formData.email,
@@ -447,7 +462,7 @@ export default function CheckoutPage() {
           shippingZoneName: selectedZone?.name,
           shippingCost: activeShippingCost,
           total,
-          paymentMethod: 'CASH_ON_DELIVERY',
+          paymentMethod: 'CASH',
           couponCode: couponCode || null,
           couponDiscount: discountPercentage > 0 ? discountPercentage : (couponDiscountValue > 0 ? couponDiscountValue : null),
         };
@@ -460,25 +475,25 @@ export default function CheckoutPage() {
 
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data.error || "Failed to place Cash on Delivery order.");
+          throw new Error(data.error || "Failed to place Cash order.");
         }
 
         clearCart();
         setOrderId(data.orderNumber);
         setConfirmedTotal(String(data.total));
-        setConfirmedPaymentMethod('CASH_ON_DELIVERY');
+        setConfirmedPaymentMethod('Cash');
         setStep(3);
 
         window.history.replaceState(
           {},
           '',
-          `/checkout?step=3&orderNumber=${encodeURIComponent(data.orderNumber)}&method=cod&total=${encodeURIComponent(String(data.total))}`
+          `/checkout?step=3&orderNumber=${encodeURIComponent(data.orderNumber)}&method=cash&total=${encodeURIComponent(String(data.total))}`
         );
         setIsSubmitting(false);
         return;
       }
 
-      // 2. Chapa Online Payment Flow
+      // 2. Digital Gateway Flow (Telebirr, CBE Birr, E-Birr via Chapa)
       const orderPayload = {
         customerName: formData.name,
         customerEmail: formData.email,
@@ -498,7 +513,7 @@ export default function CheckoutPage() {
         shippingZoneName: selectedZone?.name,
         shippingCost: activeShippingCost,
         total,
-        paymentMethod: 'Chapa',
+        paymentMethod,
         couponCode: couponCode || null,
         couponDiscount: discountPercentage > 0 ? discountPercentage : (couponDiscountValue > 0 ? couponDiscountValue : null),
       };
@@ -520,13 +535,13 @@ export default function CheckoutPage() {
       }
 
       if (!res.ok || !data.checkoutUrl) {
-        throw new Error(data.error || "Failed to initialize payment with Chapa.");
+        throw new Error(data.error || "Failed to initialize payment.");
       }
 
       // Empty shopping bag now that order has been created and user is directed to payment gateway
       clearCart();
 
-      // Redirect user to Chapa hosted payment portal
+      // Redirect user to secure payment portal
       window.location.href = data.checkoutUrl;
     } catch (error: any) {
       console.error("[Checkout Payment Error]", error);
@@ -623,7 +638,7 @@ export default function CheckoutPage() {
                   : '✓ Payment Successful'}
               </h1>
               <p className="text-[#A89880] text-sm text-center mb-5">
-                {confirmedPaymentMethod === 'CASH_ON_DELIVERY' || confirmedPaymentMethod === 'COD'
+                {isCashPayment(confirmedPaymentMethod)
                   ? `Your order #${orderId} has been placed successfully.`
                   : 'Thank you for shopping at KicksLab!'}
               </p>
@@ -637,14 +652,12 @@ export default function CheckoutPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-[#A89880]">Payment Method</span>
                   <span className="text-[#F5F0E8] font-semibold">
-                    {confirmedPaymentMethod === 'CASH_ON_DELIVERY' || confirmedPaymentMethod === 'COD'
-                      ? 'Cash on Delivery'
-                      : 'Chapa'}
+                    {formatPaymentMethodName(confirmedPaymentMethod)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[#A89880]">Payment Status</span>
-                  {confirmedPaymentMethod === 'CASH_ON_DELIVERY' || confirmedPaymentMethod === 'COD' ? (
+                  {isCashPayment(confirmedPaymentMethod) ? (
                     <span className="text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
                       Pending — Pay when delivered
                     </span>
@@ -654,7 +667,7 @@ export default function CheckoutPage() {
                     </span>
                   )}
                 </div>
-                {chapaRef && confirmedPaymentMethod !== 'CASH_ON_DELIVERY' && confirmedPaymentMethod !== 'COD' && (
+                {chapaRef && !isCashPayment(confirmedPaymentMethod) && (
                   <div className="flex justify-between items-center">
                     <span className="text-[#A89880]">Transaction Reference</span>
                     <span className="text-[#C9A96E] font-mono font-semibold">{chapaRef}</span>
@@ -663,9 +676,7 @@ export default function CheckoutPage() {
                 {confirmedTotal && (
                   <div className="flex justify-between items-center pt-2 border-t border-[#2A2420]">
                     <span className="text-[#A89880] font-semibold">
-                      {confirmedPaymentMethod === 'CASH_ON_DELIVERY' || confirmedPaymentMethod === 'COD'
-                        ? 'Total Amount'
-                        : 'Total Paid'}
+                      {isCashPayment(confirmedPaymentMethod) ? 'Total Amount' : 'Total Paid'}
                     </span>
                     <span className="text-[#C9A96E] font-bold text-sm">ETB {Number(confirmedTotal).toLocaleString()}</span>
                   </div>
@@ -681,7 +692,7 @@ export default function CheckoutPage() {
               </div>
 
               {/* COD Callout Note */}
-              {(confirmedPaymentMethod === 'CASH_ON_DELIVERY' || confirmedPaymentMethod === 'COD') && (
+              {isCashPayment(confirmedPaymentMethod) && (
                 <div className="bg-[#1C1917] border border-[#78350F]/50 rounded-lg p-3.5 mb-5 text-center">
                   <p className="text-[#FCD34D] text-xs font-bold mb-0.5">💵 Cash Payment on Delivery</p>
                   <p className="text-[#D4CEB8] text-[11px] leading-relaxed">
@@ -693,7 +704,7 @@ export default function CheckoutPage() {
               {/* Action Buttons */}
               <div className="space-y-3">
                 <div className={`grid gap-3 ${
-                  confirmedPaymentMethod === 'CASH_ON_DELIVERY' || confirmedPaymentMethod === 'COD' || !chapaRef
+                  isCashPayment(confirmedPaymentMethod) || !chapaRef
                     ? 'grid-cols-1'
                     : 'grid-cols-2'
                 }`}>
@@ -703,7 +714,7 @@ export default function CheckoutPage() {
                   >
                     Track Order
                   </Link>
-                  {chapaRef && confirmedPaymentMethod !== 'CASH_ON_DELIVERY' && confirmedPaymentMethod !== 'COD' && (
+                  {chapaRef && !isCashPayment(confirmedPaymentMethod) && (
                     <a
                       href={
                         chapaRef.startsWith('KL-TX')
@@ -1254,82 +1265,84 @@ export default function CheckoutPage() {
 
                     {/* Payment Method Selection */}
                     <div className="space-y-4">
-                      <h3 className="font-bold text-[#F5F0E8] uppercase text-xs tracking-wider">
-                        Select Payment Method
-                      </h3>
-
-                      {/* Option 1: Online Payment with Chapa */}
-                      <div
-                        onClick={() => setPaymentMethod('chapa')}
-                        className={`cursor-pointer border rounded-xl p-5 flex items-center justify-between transition-all shadow-md ${
-                          paymentMethod === 'chapa'
-                            ? 'border-[#C9A96E] bg-[#1A1A1A]'
-                            : 'border-[#2A2420] bg-[#141414] hover:border-[#C9A96E]/40'
-                        }`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            paymentMethod === 'chapa'
-                              ? 'bg-[#C9A96E]/10 border border-[#C9A96E]/40 text-[#C9A96E]'
-                              : 'bg-[#1F1C18] border border-[#2A2420] text-[#A89880]'
-                          }`}>
-                            <CreditCard className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-bold text-[#F5F0E8] text-base">Pay Online with Chapa</p>
-                              <span className="bg-[#C9A96E]/20 text-[#C9A96E] text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Test Mode</span>
-                            </div>
-                            <p className="text-[#A89880] text-xs mt-0.5">
-                              Supports Telebirr, CBE Birr, eBirr, Awash Birr, & Bank Cards via Chapa Gateway
-                            </p>
-                          </div>
-                        </div>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          paymentMethod === 'chapa' ? 'border-[#C9A96E]' : 'border-[#2A2420]'
-                        }`}>
-                          {paymentMethod === 'chapa' && <div className="w-2.5 h-2.5 rounded-full bg-[#C9A96E]" />}
-                        </div>
+                      <div>
+                        <h3 className="font-bold text-[#F5F0E8] uppercase text-xs tracking-wider">
+                          How would you like to pay?
+                        </h3>
+                        <p className="text-[#A89880] text-xs mt-1">
+                          Select your preferred payment method.
+                        </p>
                       </div>
 
-                      {/* Option 2: Cash on Delivery (COD) */}
-                      <div
-                        onClick={() => setPaymentMethod('cod')}
-                        className={`cursor-pointer border rounded-xl p-5 flex items-center justify-between transition-all shadow-md ${
-                          paymentMethod === 'cod'
-                            ? 'border-[#C9A96E] bg-[#1A1A1A]'
-                            : 'border-[#2A2420] bg-[#141414] hover:border-[#C9A96E]/40'
-                        }`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            paymentMethod === 'cod'
-                              ? 'bg-[#C9A96E]/10 border border-[#C9A96E]/40 text-[#C9A96E]'
-                              : 'bg-[#1F1C18] border border-[#2A2420] text-[#A89880]'
-                          }`}>
-                            <Banknote className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-bold text-[#F5F0E8] text-base">Cash on Delivery</p>
-                              <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                                Pay at Doorstep
-                              </span>
+                      {/* 4 Customer Payment Options */}
+                      <div className="grid grid-cols-1 gap-3">
+                        {PAYMENT_METHOD_OPTIONS.map((opt) => {
+                          const isSelected = paymentMethod === opt.id;
+                          return (
+                            <div
+                              key={opt.id}
+                              onClick={() => {
+                                setPaymentMethod(opt.id);
+                                setPaymentMethodError('');
+                              }}
+                              className={`cursor-pointer border rounded-xl p-4 sm:p-5 flex items-center justify-between transition-all shadow-md ${
+                                isSelected
+                                  ? 'border-[#C9A96E] bg-[#1A1A1A] ring-1 ring-[#C9A96E]/30'
+                                  : 'border-[#2A2420] bg-[#141414] hover:border-[#C9A96E]/40'
+                              }`}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 p-1.5 bg-white shadow-sm transition-all overflow-hidden ${
+                                  isSelected
+                                    ? 'ring-2 ring-[#C9A96E]'
+                                    : 'border border-[#2A2420]'
+                                }`}>
+                                  <Image
+                                    src={opt.logoSrc}
+                                    alt={opt.name}
+                                    width={44}
+                                    height={44}
+                                    className="object-contain w-full h-full"
+                                  />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-bold text-[#F5F0E8] text-base">{opt.name}</p>
+                                    {opt.badge && (
+                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border ${
+                                        opt.id === 'CASH'
+                                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                          : 'bg-[#C9A96E]/10 text-[#C9A96E] border-[#C9A96E]/30'
+                                      }`}>
+                                        {opt.badge}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[#A89880] text-xs mt-0.5">
+                                    {opt.description}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ml-3 ${
+                                isSelected ? 'border-[#C9A96E]' : 'border-[#2A2420]'
+                              }`}>
+                                {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#C9A96E]" />}
+                              </div>
                             </div>
-                            <p className="text-[#A89880] text-xs mt-0.5">
-                              Pay in cash when your order is delivered.
-                            </p>
-                          </div>
-                        </div>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          paymentMethod === 'cod' ? 'border-[#C9A96E]' : 'border-[#2A2420]'
-                        }`}>
-                          {paymentMethod === 'cod' && <div className="w-2.5 h-2.5 rounded-full bg-[#C9A96E]" />}
-                        </div>
+                          );
+                        })}
                       </div>
 
-                      {/* Notice when COD is selected */}
-                      {paymentMethod === 'cod' && (
+                      {/* Payment Method Validation Error */}
+                      {paymentMethodError && (
+                        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs p-3.5 rounded-xl flex items-center gap-2.5 shadow-sm">
+                          <span className="text-sm">⚠️</span>
+                          <span className="font-semibold">{paymentMethodError}</span>
+                        </div>
+                      )}
+
+                      {/* Informational Callout when Cash is selected */}
+                      {paymentMethod === 'CASH' && (
                         <div className="bg-[#1C1917] border border-[#78350F]/50 text-[#FCD34D] text-xs p-3.5 rounded-xl flex items-center gap-2.5">
                           <span className="text-base">💵</span>
                           <p>Pay in cash when your order is delivered. No online card details required.</p>
@@ -1362,16 +1375,23 @@ export default function CheckoutPage() {
                         {isSubmitting ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            {paymentMethod === 'cod' ? 'Placing Order...' : 'Connecting to Chapa...'}
+                            {paymentMethod === 'CASH'
+                              ? 'Placing Order...'
+                              : `Connecting to ${formatPaymentMethodName(paymentMethod)}...`}
                           </>
-                        ) : paymentMethod === 'cod' ? (
+                        ) : !paymentMethod ? (
+                          <>
+                            Place Order
+                            <ChevronRight className="h-4 w-4" />
+                          </>
+                        ) : paymentMethod === 'CASH' ? (
                           <>
                             Place Order (Cash on Delivery)
                             <ChevronRight className="h-4 w-4" />
                           </>
                         ) : (
                           <>
-                            Pay with Chapa (ETB {total.toLocaleString('en-ET', { minimumFractionDigits: 2 })})
+                            Pay with {formatPaymentMethodName(paymentMethod)} (ETB {total.toLocaleString('en-ET', { minimumFractionDigits: 2 })})
                             <ChevronRight className="h-4 w-4" />
                           </>
                         )}

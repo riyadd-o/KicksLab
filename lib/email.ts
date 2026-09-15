@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { formatPaymentMethodName, isCashPayment } from "@/lib/payment";
 
 function createTransporter() {
   const user = process.env.EMAIL_USER;
@@ -152,13 +153,13 @@ export async function sendOrderConfirmationEmail({
       )
       .join("");
 
-    const isCOD = paymentMethod === "CASH_ON_DELIVERY" || paymentMethod === "COD";
-    const displayPaymentMethod = isCOD ? "Cash on Delivery" : (paymentMethod || "Chapa");
+    const isCOD = isCashPayment(paymentMethod);
+    const displayPaymentMethod = formatPaymentMethodName(paymentMethod);
     const displayPaymentStatus = isCOD && paymentStatus !== "PAID" ? "Payment pending" : (paymentStatus || "PAID");
 
     const greetingText = isCOD
       ? `Thank you for your order! Your order has been placed successfully. Please pay the delivery person in cash when your order arrives.`
-      : `Thank you for your order! Your payment has been successfully processed via Chapa and your order status is <strong>${orderStatus}</strong>.`;
+      : `Thank you for your order! Your payment has been successfully processed and your order status is <strong>${orderStatus}</strong>.`;
 
     const info = await transporter.sendMail({
       from: sender,

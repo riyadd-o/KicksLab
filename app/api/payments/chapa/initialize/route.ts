@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCustomerSession } from "@/lib/session";
 import { calculateDropPrice } from "@/lib/promotions";
+import { mapToChapaChannel } from "@/lib/payment";
 
 function generateOrderNumber() {
   return "KL-" + Math.floor(100000 + Math.random() * 900000);
@@ -22,7 +23,14 @@ export async function POST(req: NextRequest) {
       couponCode,
       shippingZoneId,
       shippingZoneName,
+      paymentMethod,
     } = body;
+
+    // Resolve customer payment method and backend provider
+    const requestedMethod = typeof paymentMethod === "string" ? paymentMethod.trim().toUpperCase() : "TELEBIRR";
+    const validMethods = ["TELEBIRR", "CBE_BIRR", "EBIRR"];
+    const finalPaymentMethod = validMethods.includes(requestedMethod) ? requestedMethod : "TELEBIRR";
+    const finalPaymentProvider = "CHAPA";
 
     // Canonical customer resolution
     let userId: string | null = null;
@@ -262,7 +270,8 @@ export async function POST(req: NextRequest) {
         shippingMethod: zoneName,
         shippingCost: serverShippingCost,
         total: serverTotal,
-        paymentMethod: "Chapa",
+        paymentMethod: finalPaymentMethod,
+        paymentProvider: finalPaymentProvider,
         paymentStatus: "PENDING",
         paymentReference: tx_ref,
         status: "PENDING",
@@ -314,6 +323,9 @@ export async function POST(req: NextRequest) {
       customization: {
         title: "KicksLab",
         description: `Order ${orderNumber}`,
+      },
+      meta: {
+        payment_method: mapToChapaChannel(finalPaymentMethod),
       },
     };
 

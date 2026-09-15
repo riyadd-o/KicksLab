@@ -8,6 +8,7 @@ import {
   sendRefundFailedEmail,
 } from "@/lib/email";
 import { initiateChapaRefund, verifyChapaRefund } from "@/lib/chapa";
+import { formatPaymentMethodName, isCashPayment, isDigitalPayment } from "@/lib/payment";
 
 export async function PUT(
   req: NextRequest,
@@ -96,9 +97,8 @@ export async function PUT(
         );
       }
 
-      const pm = (existingRefund.paymentMethod || order.paymentMethod || "").trim().toUpperCase();
-      const isChapa = pm === "CHAPA" || pm.includes("CHAPA");
-      const isCod = pm === "CASH_ON_DELIVERY" || pm === "COD" || pm.includes("CASH");
+      const isChapa = isDigitalPayment(order) || isDigitalPayment(existingRefund);
+      const isCod = isCashPayment(existingRefund.paymentMethod) || isCashPayment(order.paymentMethod);
 
       // ─── CASH ON DELIVERY REFUND (Internal COD Lifecycle) ──────
       if (isCod) {
@@ -265,7 +265,7 @@ export async function PUT(
               refundNumber: updatedRefund.refundNumber,
               orderNumber: order.orderNumber,
               amount: updatedRefund.amount,
-              paymentMethod: "Chapa",
+              paymentMethod: formatPaymentMethodName(existingRefund.paymentMethod || order.paymentMethod),
               staffNote: adminNote || updatedRefund.adminNote || undefined,
             });
             if (res.success) {

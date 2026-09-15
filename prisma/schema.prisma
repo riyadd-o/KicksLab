@@ -151,7 +151,8 @@ model Order {
   shippingZone            String? // snapshot of shipping zone name at order time e.g. "Dire Dawa", "Addis Ababa"
   shippingCost            Float
   total                   Float
-  paymentMethod           String // "Chapa" | "CBE" | "TeleBirr"
+  paymentMethod           String // "CASH" | "TELEBIRR" | "CBE_BIRR" | "EBIRR" | historical "Chapa" | "CASH_ON_DELIVERY"
+  paymentProvider         String        @default("NONE") // "NONE" | "CHAPA"
   paymentStatus           PaymentStatus @default(PENDING)
   paymentReference        String?       @unique // Chapa transaction reference (tx_ref)
   chapaRefId              String? // Official Chapa internal reference ID (ref_id)
@@ -241,6 +242,7 @@ model Refund {
   customerName         String
   customerEmail        String
   paymentMethod        String
+  paymentProvider      String       @default("NONE") // "NONE" | "CHAPA"
   amount               Float
   reason               String
   description          String?

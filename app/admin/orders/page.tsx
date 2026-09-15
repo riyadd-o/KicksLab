@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Search, Filter, X, Eye, AlertCircle } from 'lucide-react';
+import { formatPaymentMethodName, isCashPayment } from '@/lib/payment';
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -96,7 +97,7 @@ export default function AdminOrdersPage() {
   const filteredOrders = orders.filter(o => {
     const matchesSearch = (o.orderNumber || o.id).toLowerCase().includes(search.toLowerCase()) || 
                           (o.customerName || '').toLowerCase().includes(search.toLowerCase());
-    const isCOD = o.paymentMethod === 'CASH_ON_DELIVERY' || o.paymentMethod === 'COD';
+    const isCOD = isCashPayment(o.paymentMethod);
     const matchesStatus = 
       statusFilter === 'All' ? true :
       statusFilter === 'COD' ? isCOD :
@@ -198,11 +199,14 @@ export default function AdminOrdersPage() {
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1 items-start">
                         <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
-                          order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'COD'
+                          isCashPayment(order.paymentMethod)
                             ? 'bg-[#C9A96E]/10 border-[#C9A96E]/30 text-[#C9A96E]'
                             : 'bg-blue-500/10 border-blue-500/30 text-blue-400'
                         }`}>
-                          {order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'COD' ? 'COD' : 'Chapa'}
+                          {formatPaymentMethodName(order.paymentMethod)}
+                        </span>
+                        <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 text-[#A89880] bg-[#1A1A1A] rounded border border-[#2A2420]">
+                          Provider: {order.paymentProvider && order.paymentProvider !== 'NONE' ? order.paymentProvider : (isCashPayment(order.paymentMethod) ? 'None' : 'Chapa')}
                         </span>
                         <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border inline-block ${
                           order.paymentStatus === 'PAID'
@@ -311,13 +315,17 @@ export default function AdminOrdersPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-[#A89880]">Payment Method:</span>
                     <span className={`text-xs font-bold px-2 py-0.5 rounded border ${
-                      viewOrder.paymentMethod === 'CASH_ON_DELIVERY' || viewOrder.paymentMethod === 'COD'
+                      isCashPayment(viewOrder.paymentMethod)
                         ? 'bg-[#C9A96E]/10 border-[#C9A96E]/30 text-[#C9A96E]'
                         : 'bg-blue-500/10 border-blue-500/30 text-blue-400'
                     }`}>
-                      {viewOrder.paymentMethod === 'CASH_ON_DELIVERY' || viewOrder.paymentMethod === 'COD'
-                        ? 'Cash on Delivery (COD)'
-                        : viewOrder.paymentMethod || 'Chapa Online'}
+                      {formatPaymentMethodName(viewOrder.paymentMethod)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#A89880]">Payment Provider:</span>
+                    <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-[#1A1A1A] border border-[#2A2420] text-[#F5F0E8]">
+                      {viewOrder.paymentProvider && viewOrder.paymentProvider !== 'NONE' ? viewOrder.paymentProvider : (isCashPayment(viewOrder.paymentMethod) ? 'None' : 'Chapa')}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -334,7 +342,7 @@ export default function AdminOrdersPage() {
                   </div>
 
                   {/* COD Mark as Paid Button */}
-                  {(viewOrder.paymentMethod === 'CASH_ON_DELIVERY' || viewOrder.paymentMethod === 'COD') &&
+                  {isCashPayment(viewOrder.paymentMethod) &&
                     viewOrder.paymentStatus !== 'PAID' && (
                       <div className="pt-2 pb-1">
                         <button

@@ -28,7 +28,7 @@ const FAQS: FAQItem[] = [
   },
   {
     question: 'Which payment methods do you support?',
-    answer: 'We accept secure instant payments via Chapa (supporting TeleBirr, CBE Birr, and major Ethiopian bank cards) as well as direct bank transfers upon checkout.',
+    answer: 'We accept secure instant payments via Telebirr, CBE Birr, and E-Birr, as well as Cash on Delivery upon checkout.',
   },
 ];
 
