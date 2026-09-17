@@ -81,7 +81,7 @@ export default function Footer() {
     }
   };
 
-  if (pathname.startsWith('/admin') || pathname.startsWith('/staff') || pathname === '/login' || pathname === '/register') return null;
+  if (pathname.startsWith('/admin') || pathname.startsWith('/staff') || pathname === '/login' || pathname === '/register' || pathname === '/signin' || pathname === '/signup') return null;
 
   return (
     <footer className="border-t border-[#2A2420] bg-[#141414] text-[#F5F0E8]">
@@ -168,8 +168,8 @@ export default function Footer() {
             </p>
             <div className="flex flex-col space-y-3 pt-2">
               <Link
-                href="/register"
-                className="w-full bg-[#C9A96E] hover:bg-[#C9A96E]-hover text-[#0D0D0D] font-sans text-xs font-semibold tracking-widest uppercase py-3.5 rounded-lg transition-colors duration-300 text-center flex items-center justify-center"
+                href="/signup"
+                className="w-full bg-[#C9A96E] hover:bg-[#b0925c] text-[#0D0D0D] font-sans text-xs font-semibold tracking-widest uppercase py-3.5 rounded-lg transition-colors duration-300 text-center flex items-center justify-center cursor-pointer"
               >
                 Get Started Free
               </Link>

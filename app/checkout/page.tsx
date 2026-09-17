@@ -40,6 +40,7 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState('');
   const [rewardCoupon, setRewardCoupon] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const [formData, setFormData] = useState<ShippingDetails>({
@@ -173,6 +174,15 @@ export default function CheckoutPage() {
         input.removeAttribute('readonly');
       }, 100);
     });
+
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        setIsRedirecting(false);
+        setIsSubmitting(false);
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
   }, [clearCart]);
 
   const selectedZone = useCartStore((state) => state.selectedZone);
@@ -425,6 +435,8 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
+    if (isSubmitting || isRedirecting) return;
+
     if (!selectedZone) {
       setShippingError(true);
       setErrorMessage('Please select your shipping location.');
@@ -538,14 +550,14 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Failed to initialize payment.");
       }
 
-      // Empty shopping bag now that order has been created and user is directed to payment gateway
-      clearCart();
-
-      // Redirect user to secure payment portal
-      window.location.href = data.checkoutUrl;
+      // Smoothly navigate directly to the external Chapa checkout portal.
+      // Do not clear the cart early or unmount checkout, preventing empty-page and footer flash.
+      setIsRedirecting(true);
+      window.location.assign(data.checkoutUrl);
     } catch (error: any) {
       console.error("[Checkout Payment Error]", error);
       setErrorMessage(error.message || "Failed to place order. Please try again.");
+      setIsRedirecting(false);
       setIsSubmitting(false);
     }
   };
@@ -559,8 +571,8 @@ export default function CheckoutPage() {
     );
   }
 
-  // Safe-guard for steps 1 and 2 if cart is empty
-  if (cart.length === 0 && step < 3) {
+  // Safe-guard for steps 1 and 2 if cart is empty (suppressed while submitting or redirecting)
+  if (!isSubmitting && !isRedirecting && cart.length === 0 && step < 3) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 text-center flex flex-col items-center justify-center flex-1">
         <ShoppingBag className="h-12 w-12 text-[#C9A96E] mb-4" />
@@ -580,6 +592,21 @@ export default function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-7xl w-full px-4 pt-32 pb-12 sm:px-6 lg:px-8">
+      {/* Seamless transition overlay to prevent footer flash during Chapa redirect */}
+      {isRedirecting && (
+        <div className="fixed inset-0 z-[100] bg-[#0D0D0D]/95 backdrop-blur-md flex flex-col items-center justify-center text-center p-4">
+          <div className="bg-[#141414] border border-[#2A2420] rounded-2xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center">
+            <Loader2 className="h-9 w-9 animate-spin text-[#C9A96E] mb-4" />
+            <h3 className="font-serif text-lg font-bold text-[#F5F0E8] mb-1">
+              Redirecting to {paymentMethod ? formatPaymentMethodName(paymentMethod) : 'Payment'}
+            </h3>
+            <p className="text-xs text-[#A89880]">
+              Connecting to secure checkout, please wait...
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Checkout Steps Header */}
       <div className="max-w-4xl mx-auto mb-12">
         <div className="flex items-center justify-center gap-4 sm:gap-8 font-sans text-xs font-bold uppercase tracking-wider text-[#A89880]">
@@ -1360,7 +1387,7 @@ export default function CheckoutPage() {
                     <div className="flex items-center gap-4 pt-4">
                       <button
                         onClick={() => setStep(1)}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isRedirecting}
                         className="flex items-center gap-1.5 rounded-lg border border-[#2A2420] bg-[#0D0D0D] hover:bg-[#1A1A1A] px-5 py-3.5 text-[#F5F0E8] font-sans text-xs font-bold uppercase tracking-widest transition-colors duration-300 disabled:opacity-50"
                       >
                         <ArrowLeft className="h-4 w-4" />
@@ -1369,13 +1396,15 @@ export default function CheckoutPage() {
 
                       <button
                         onClick={handlePlaceOrder}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isRedirecting}
                         className="flex-1 flex items-center justify-center gap-2 rounded-lg py-3.5 bg-[#C9A96E] hover:bg-[#C9A96E]-hover text-[#0D0D0D] font-sans text-xs font-bold uppercase tracking-widest shadow-md transition-colors duration-300 disabled:opacity-70 cursor-pointer"
                       >
-                        {isSubmitting ? (
+                        {isSubmitting || isRedirecting ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            {paymentMethod === 'CASH'
+                            {isRedirecting
+                              ? `Redirecting to ${formatPaymentMethodName(paymentMethod)}...`
+                              : paymentMethod === 'CASH'
                               ? 'Placing Order...'
                               : `Connecting to ${formatPaymentMethodName(paymentMethod)}...`}
                           </>
